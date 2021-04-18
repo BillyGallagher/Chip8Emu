@@ -72,7 +72,6 @@ namespace Chip8Emu
             }
 
             DisplayBitmap.UnlockBits(bitmapData);
-            this.
         }
 
         private void Chip8Display_Load(object sender, EventArgs e)
