@@ -1,12 +1,15 @@
-﻿using System;
+﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 
 namespace Chip8Emu
 {
-    class Chip8
+    public class Chip8 : Game
     {
         readonly byte[] V = new byte[16];
         ushort I, PC = 0x200;
@@ -22,11 +25,18 @@ namespace Chip8Emu
 
         readonly bool[,] DisplayBuffer = new bool[64, 32];
 
-        Action<bool[,]> Draw;
+        private GraphicsDeviceManager _graphics;
+        private SpriteBatch _spriteBatch;
 
-        public Chip8(Action<bool[,]> draw)
+        private readonly Stopwatch Stopwatch500Hz = Stopwatch.StartNew();
+        private readonly TimeSpan ElapsedTimeTarget500Hz = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 500);
+        private readonly Stopwatch Stopwatch60Hz = Stopwatch.StartNew();
+        private readonly TimeSpan ElapsedTimeTarget60Hz = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60);
+
+        public Chip8()
         {
-            Draw = draw;
+            _graphics = new GraphicsDeviceManager(this);
+
             OpCodes = new Dictionary<byte, Action<OpCode>>()
             {
                 { 0x0, ClearOrReturn },
@@ -61,25 +71,73 @@ namespace Chip8Emu
             };
 
             InitializeFont();
+            LoadProgram(File.ReadAllBytes(@"C:\dev\Chip8Emu\test_opcode.ch8"));
         }
-        
-        public void Tick()
+
+        protected override void Initialize()
         {
-            var rawOpCode = (ushort)(RAM[PC++] << 8 | RAM[PC++]);
-
-            var opCode = new OpCode
-            {
-                FullOpCode = rawOpCode,
-                NNN = (ushort)(rawOpCode & 0x0fff),
-                NN = (byte)(rawOpCode & 0x00ff),
-                N = (byte)(rawOpCode & 0x000f),
-                X = (byte)((rawOpCode & 0x0f00) >> 8),
-                Y = (byte)((rawOpCode & 0x00f0) >> 4)
-            };
-
-            var msb = (byte)(rawOpCode >> 12);
-            OpCodes[msb](opCode);
+            // TODO: Figure out dimensions
+            base.Initialize();
         }
+
+        protected override void LoadContent()
+        {
+            _spriteBatch = new SpriteBatch(GraphicsDevice);
+            base.LoadContent();
+        }
+
+        protected override void Update(GameTime gameTime)
+        {
+            if (Stopwatch500Hz.Elapsed >= ElapsedTimeTarget500Hz)
+            {
+                var rawOpCode = (ushort)(RAM[PC++] << 8 | RAM[PC++]);
+
+                var opCode = new OpCode
+                {
+                    FullOpCode = rawOpCode,
+                    NNN = (ushort)(rawOpCode & 0x0fff),
+                    NN = (byte)(rawOpCode & 0x00ff),
+                    N = (byte)(rawOpCode & 0x000f),
+                    X = (byte)((rawOpCode & 0x0f00) >> 8),
+                    Y = (byte)((rawOpCode & 0x00f0) >> 4)
+                };
+
+                Debug.WriteLine(rawOpCode);
+
+                var msb = (byte)(rawOpCode >> 12);
+                OpCodes[msb](opCode);
+            }
+            if (Stopwatch60Hz.Elapsed >= ElapsedTimeTarget60Hz)
+            {
+
+            }
+
+            base.Update(gameTime);
+        }
+
+        protected override void Draw(GameTime gameTime)
+        {
+            var onPixel = new Texture2D(_graphics.GraphicsDevice, 5, 5);
+            Color[] onData = new Color[5 * 5];
+            for (int i = 0; i < onData.Length; i++) { onData[i] = Color.White; }
+
+            var offPixel = new Texture2D(_graphics.GraphicsDevice, 5, 5);
+            Color[] offData = new Color[5 * 5];
+            for (int i = 0; i < offData.Length; i++) { offData[i] = Color.White; }
+
+            _spriteBatch.Begin();
+            for (int x = 0; x < 64; x++)
+            {
+                for (int y = 0; y < 32; y++)
+                {
+                    bool isOn = DisplayBuffer[x, y];
+                    Vector2 coordinate = new Vector2(x * 5, y * 5);
+                    _spriteBatch.Draw(isOn ? onPixel : offPixel, coordinate, Color.White);
+                }
+            }
+            _spriteBatch.End();
+        }
+
 
         public void LoadProgram(byte[] rom)
         {
@@ -120,6 +178,7 @@ namespace Chip8Emu
         {
             if (opCode.N == 0x0) // Clear display
             {
+                _graphics.GraphicsDevice.Clear(Color.Black);
             }
             else if (opCode.N == 0xe) // Return
             {
@@ -262,7 +321,7 @@ namespace Chip8Emu
                 }
             }
 
-            Draw(DisplayBuffer);
+            //Draw(DisplayBuffer);
         }
 
         void SkipOnKey(OpCode opCode) { /* TODO: Implement */ }

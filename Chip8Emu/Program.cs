@@ -6,18 +6,18 @@ using System.Windows.Forms;
 
 namespace Chip8Emu
 {
-    static class Program
+    public static class Program
     {
         /// <summary>
         ///  The main entry point for the application.
         /// </summary>
         [STAThread]
-        static void Main()
+        public static void Main()
         {
-            Application.SetHighDpiMode(HighDpiMode.SystemAware);
-            Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new Chip8Display());
+            using (var emu = new Chip8())
+            {
+                emu.Run();
+            }
         }
     }
 }
