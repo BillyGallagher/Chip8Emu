@@ -23,7 +23,7 @@ namespace Chip8Emu
         byte DelayTimer;
         readonly Random Rng = new Random();
 
-        readonly bool[,] DisplayBuffer = new bool[64, 32];
+        private bool[,] DisplayBuffer = new bool[64, 32];
 
         private GraphicsDeviceManager _graphics;
         private SpriteBatch _spriteBatch;
@@ -77,6 +77,8 @@ namespace Chip8Emu
         protected override void Initialize()
         {
             // TODO: Figure out dimensions
+            _graphics.PreferredBackBufferWidth = 64 * 5;
+            _graphics.PreferredBackBufferHeight = 32 * 5;
             base.Initialize();
         }
 
@@ -102,14 +104,12 @@ namespace Chip8Emu
                     Y = (byte)((rawOpCode & 0x00f0) >> 4)
                 };
 
-                Debug.WriteLine(rawOpCode);
-
                 var msb = (byte)(rawOpCode >> 12);
                 OpCodes[msb](opCode);
             }
             if (Stopwatch60Hz.Elapsed >= ElapsedTimeTarget60Hz)
             {
-
+                // TODO: Sound, I think
             }
 
             base.Update(gameTime);
@@ -120,19 +120,20 @@ namespace Chip8Emu
             var onPixel = new Texture2D(_graphics.GraphicsDevice, 5, 5);
             Color[] onData = new Color[5 * 5];
             for (int i = 0; i < onData.Length; i++) { onData[i] = Color.White; }
+            onPixel.SetData(onData);
 
             var offPixel = new Texture2D(_graphics.GraphicsDevice, 5, 5);
             Color[] offData = new Color[5 * 5];
-            for (int i = 0; i < offData.Length; i++) { offData[i] = Color.White; }
+            for (int i = 0; i < offData.Length; i++) { offData[i] = Color.Black; }
+            offPixel.SetData(offData);
 
             _spriteBatch.Begin();
-            for (int x = 0; x < 64; x++)
+            for (int y = 0; y < 32; y++)
             {
-                for (int y = 0; y < 32; y++)
+                for (int x = 0; x < 64; x++)
                 {
                     bool isOn = DisplayBuffer[x, y];
-                    Vector2 coordinate = new Vector2(x * 5, y * 5);
-                    _spriteBatch.Draw(isOn ? onPixel : offPixel, coordinate, Color.White);
+                    _spriteBatch.Draw(isOn ? onPixel : offPixel, new Rectangle(x * 5, y * 5, 5, 5), Color.White);
                 }
             }
             _spriteBatch.End();
@@ -178,7 +179,7 @@ namespace Chip8Emu
         {
             if (opCode.N == 0x0) // Clear display
             {
-                _graphics.GraphicsDevice.Clear(Color.Black);
+                DisplayBuffer = new bool[64, 32];
             }
             else if (opCode.N == 0xe) // Return
             {
@@ -320,8 +321,6 @@ namespace Chip8Emu
                     }
                 }
             }
-
-            //Draw(DisplayBuffer);
         }
 
         void SkipOnKey(OpCode opCode) { /* TODO: Implement */ }
