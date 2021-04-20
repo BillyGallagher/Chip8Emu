@@ -1,3 +1,3 @@
-Chip8 Emulator
+A CHIP-8 emulator written in C# using Monogame for the graphics/input handling.
 
-Nothing to see yet, working on converting to monogame from windows forms
+The test rom I am using is from this repository: https://github.com/corax89/chip8-test-rom
