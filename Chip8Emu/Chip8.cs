@@ -180,7 +180,7 @@ namespace Chip8Emu
         }
 
         // ---- OpCodes ----
-        void ClearOrReturn(OpCode opCode) 
+        private void ClearOrReturn(OpCode opCode) 
         {
             if (opCode.N == 0x0) // Clear display
             {
@@ -193,18 +193,18 @@ namespace Chip8Emu
             }
         }
 
-        void Jump(OpCode opCode) 
+        private void Jump(OpCode opCode) 
         {
             _pCounter = opCode.NNN;
         }
 
-        void Call(OpCode opCode) 
+        private void Call(OpCode opCode) 
         {
             _stack.Add(_pCounter);
             _pCounter = opCode.NNN;
         }
 
-        void SkipIfXEqual(OpCode opCode) 
+        private void SkipIfXEqual(OpCode opCode) 
         { 
             if (_registers[opCode.X] == opCode.NN)
             {
@@ -212,7 +212,7 @@ namespace Chip8Emu
             }
         }
 
-        void SkipIfXNotEqual(OpCode opCode) 
+        private void SkipIfXNotEqual(OpCode opCode) 
         { 
             if (_registers[opCode.X] != opCode.NN)
             {
@@ -220,7 +220,7 @@ namespace Chip8Emu
             }
         }
 
-        void SkipIfXEqualToY(OpCode opCode) 
+        private void SkipIfXEqualToY(OpCode opCode) 
         { 
             if (_registers[opCode.X] == _registers[opCode.Y])
             {
@@ -228,17 +228,17 @@ namespace Chip8Emu
             }
         }
 
-        void SetX(OpCode opCode) 
+        private void SetX(OpCode opCode) 
         {
             _registers[opCode.X] = opCode.NN;
         }
 
-        void IncreaseX(OpCode opCode) 
+        private void IncreaseX(OpCode opCode) 
         {
             _registers[opCode.X] += opCode.NN;       
         }
 
-        void Arithmetic(OpCode opCode) 
+        private void Arithmetic(OpCode opCode) 
         {
             switch (opCode.N)
             {
@@ -280,7 +280,7 @@ namespace Chip8Emu
             }
         }
 
-        void SkipIfXNotEqualToY(OpCode opCode) 
+        private void SkipIfXNotEqualToY(OpCode opCode) 
         { 
             if (_registers[opCode.X] != _registers[opCode.Y])
             {
@@ -288,22 +288,22 @@ namespace Chip8Emu
             }
         }
 
-        void SetI(OpCode opCode) 
+        private void SetI(OpCode opCode) 
         {
             _addressRegister = opCode.NNN;
         }
 
-        void JumpWithOffset(OpCode opCode) 
+        private void JumpWithOffset(OpCode opCode) 
         {
             _pCounter = (ushort)(_registers[0] + opCode.NNN);       
         }
 
-        void Random(OpCode opCode) 
+        private void Random(OpCode opCode) 
         {
             _registers[opCode.X] = (byte)(_rng.Next(0, 256) & opCode.NN);
         }
 
-        void Display(OpCode opCode) 
+        private void Display(OpCode opCode) 
         {
             _registers[0xF] = 0;
             for (var line = 0; line < opCode.N; line++)
@@ -328,9 +328,9 @@ namespace Chip8Emu
             }
         }
 
-        void SkipOnKey(OpCode opCode) { /* TODO: Implement */ }
+        private void SkipOnKey(OpCode opCode) { /* TODO: Implement */ }
 
-        void MiscOperations(OpCode opCode) 
+        private void MiscOperations(OpCode opCode) 
         { 
             if (_miscOpCodes.ContainsKey(opCode.NN))
             {
@@ -338,31 +338,31 @@ namespace Chip8Emu
             }
         }
 
-        void SetXToDelayTimer(OpCode opCode) 
+        private void SetXToDelayTimer(OpCode opCode) 
         {
             _registers[opCode.X] = _delayTimer; 
         }
 
-        void ReadKey(OpCode opCode) { /* TODO: Implement */ }
+        private void ReadKey(OpCode opCode) { /* TODO: Implement */ }
 
-        void SetDelayTimer(OpCode opCode) 
+        private void SetDelayTimer(OpCode opCode) 
         {
             _delayTimer = _registers[opCode.X];       
         }
 
-        void SetSoundTimer(OpCode opCode) { /* TODO: Implement */ }
+        private void SetSoundTimer(OpCode opCode) { /* TODO: Implement */ }
 
-        void AddXToI(OpCode opCode) 
+        private void AddXToI(OpCode opCode) 
         {
             _addressRegister += _registers[opCode.X];       
         }
 
-        void SetIToCharacter(OpCode opCode) 
+        private void SetIToCharacter(OpCode opCode) 
         {
             _addressRegister = _memory[5 * opCode.X];
         }
 
-        void BinaryCodedDecimal(OpCode opCode) 
+        private void BinaryCodedDecimal(OpCode opCode) 
         {
             var value = (int)(_registers[opCode.X]);
 
@@ -376,7 +376,7 @@ namespace Chip8Emu
             _memory[_addressRegister] = (byte)(value % 10);
         }
 
-        void DumpRegisters(OpCode opCode) 
+        private void DumpRegisters(OpCode opCode) 
         {
             for (byte index = 0; index < opCode.X; index++)
             {
@@ -384,7 +384,7 @@ namespace Chip8Emu
             }
         }
 
-        void LoadRegisters(OpCode opCode) 
+        private void LoadRegisters(OpCode opCode) 
         { 
             for (byte index = 0; index < opCode.X; index++)
             {
