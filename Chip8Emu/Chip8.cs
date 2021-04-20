@@ -23,9 +23,13 @@ namespace Chip8Emu
         private readonly Dictionary<byte, Action<OpCode>> _miscOpCodes;
 
         // Graphics
-        private bool[,] _displayBuffer = new bool[64, 32];
         private GraphicsDeviceManager _graphics;
         private SpriteBatch _spriteBatch;
+        private Texture2D _onPixel;
+        private Texture2D _offPixel;
+        private bool[,] _displayBuffer = new bool[64, 32];
+        private Vector2 _baseScreenSize = new Vector2(64 * 5, 32 * 5);
+        private Matrix _globalTransform;
 
         // Timers
         private byte _delayTimer;
@@ -41,6 +45,8 @@ namespace Chip8Emu
         public Chip8()
         {
             _graphics = new GraphicsDeviceManager(this);
+            Window.AllowUserResizing = true;
+            Window.ClientSizeChanged += OnResize;
 
             _opCodes = new Dictionary<byte, Action<OpCode>>()
             {
@@ -82,14 +88,24 @@ namespace Chip8Emu
         protected override void Initialize()
         {
             // TODO: Figure out dimensions
-            _graphics.PreferredBackBufferWidth = 64 * 5;
-            _graphics.PreferredBackBufferHeight = 32 * 5;
+            ScaleDisplayArea();
             base.Initialize();
         }
 
         protected override void LoadContent()
         {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
+
+            _onPixel = new Texture2D(_graphics.GraphicsDevice, 5, 5);
+            Color[] onData = new Color[5 * 5];
+            for (int i = 0; i < onData.Length; i++) { onData[i] = Color.White; }
+            _onPixel.SetData(onData);
+
+            _offPixel = new Texture2D(_graphics.GraphicsDevice, 5, 5);
+            Color[] offData = new Color[5 * 5];
+            for (int i = 0; i < offData.Length; i++) { offData[i] = Color.Black; }
+            _offPixel.SetData(offData);
+
             base.LoadContent();
         }
 
@@ -122,28 +138,17 @@ namespace Chip8Emu
 
         protected override void Draw(GameTime gameTime)
         {
-            var onPixel = new Texture2D(_graphics.GraphicsDevice, 5, 5);
-            Color[] onData = new Color[5 * 5];
-            for (int i = 0; i < onData.Length; i++) { onData[i] = Color.White; }
-            onPixel.SetData(onData);
-
-            var offPixel = new Texture2D(_graphics.GraphicsDevice, 5, 5);
-            Color[] offData = new Color[5 * 5];
-            for (int i = 0; i < offData.Length; i++) { offData[i] = Color.Black; }
-            offPixel.SetData(offData);
-
-            _spriteBatch.Begin();
+            _spriteBatch.Begin(SpriteSortMode.Immediate, null, null, null, null, null, _globalTransform);
             for (int y = 0; y < 32; y++)
             {
                 for (int x = 0; x < 64; x++)
                 {
                     bool isOn = _displayBuffer[x, y];
-                    _spriteBatch.Draw(isOn ? onPixel : offPixel, new Rectangle(x * 5, y * 5, 5, 5), Color.White);
+                    _spriteBatch.Draw(isOn ? _onPixel : _offPixel, new Rectangle(x * 5, y * 5, 5, 5), Color.White);
                 }
             }
             _spriteBatch.End();
         }
-
 
         public void LoadProgram(byte[] rom)
         {
@@ -179,7 +184,24 @@ namespace Chip8Emu
             }
         }
 
-        // ---- OpCodes ----
+        private void OnResize(object sender, EventArgs e) 
+        {
+            var window = sender as GameWindow;
+            Debug.WriteLine(window.ClientBounds.Width + " x " + window.ClientBounds.Height);
+
+            ScaleDisplayArea();
+        }
+
+        private void ScaleDisplayArea()
+        {
+            float horizontalScaling = GraphicsDevice.PresentationParameters.BackBufferWidth / _baseScreenSize.X;
+            float verticalScaling = GraphicsDevice.PresentationParameters.BackBufferHeight / _baseScreenSize.Y;
+
+            Vector3 scaleFactor = new Vector3(horizontalScaling, verticalScaling, 1);
+            _globalTransform = Matrix.CreateScale(scaleFactor);
+        }
+
+        #region OpCodes
         private void ClearOrReturn(OpCode opCode) 
         {
             if (opCode.N == 0x0) // Clear display
@@ -391,5 +413,6 @@ namespace Chip8Emu
                 _registers[index] = _memory[_addressRegister + index];
             }
         }
+        #endregion
     }
 }
