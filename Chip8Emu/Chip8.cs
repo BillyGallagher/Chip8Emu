@@ -186,9 +186,6 @@ namespace Chip8Emu
 
         private void OnResize(object sender, EventArgs e) 
         {
-            var window = sender as GameWindow;
-            Debug.WriteLine(window.ClientBounds.Width + " x " + window.ClientBounds.Height);
-
             ScaleDisplayArea();
         }
 
