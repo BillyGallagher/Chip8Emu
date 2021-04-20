@@ -11,33 +11,38 @@ namespace Chip8Emu
 {
     public class Chip8 : Game
     {
-        readonly byte[] V = new byte[16];
-        ushort I, PC = 0x200;
+        // Memory and registers
+        private readonly byte[] _registers = new byte[16];
+        private ushort _addressRegister;
+        private ushort _pCounter = 0x200;
+        private readonly byte[] _memory = new byte[0x1000];
+        private readonly List<ushort> _stack = new List<ushort>();
 
-        readonly byte[] RAM = new byte[0x1000];
-        readonly List<ushort> Stack = new List<ushort>();
+        // OpCodes
+        private readonly Dictionary<byte, Action<OpCode>> _opCodes;
+        private readonly Dictionary<byte, Action<OpCode>> _miscOpCodes;
 
-        readonly Dictionary<byte, Action<OpCode>> OpCodes;
-        readonly Dictionary<byte, Action<OpCode>> MiscOpCodes;
-
-        byte DelayTimer;
-        readonly Random Rng = new Random();
-
-        private bool[,] DisplayBuffer = new bool[64, 32];
-
+        // Graphics
+        private bool[,] _displayBuffer = new bool[64, 32];
         private GraphicsDeviceManager _graphics;
         private SpriteBatch _spriteBatch;
 
-        private readonly Stopwatch Stopwatch500Hz = Stopwatch.StartNew();
-        private readonly TimeSpan ElapsedTimeTarget500Hz = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 500);
-        private readonly Stopwatch Stopwatch60Hz = Stopwatch.StartNew();
-        private readonly TimeSpan ElapsedTimeTarget60Hz = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60);
+        // Timers
+        private byte _delayTimer;
+        private readonly Stopwatch _stopwatch500Hz = Stopwatch.StartNew();
+        private readonly TimeSpan _elapsedTimeTarget500Hz = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 500);
+        private readonly Stopwatch _stopwatch60Hz = Stopwatch.StartNew();
+        private readonly TimeSpan _elapsedTimeTarget60Hz = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60);
+
+
+        readonly Random _rng = new Random();
+
 
         public Chip8()
         {
             _graphics = new GraphicsDeviceManager(this);
 
-            OpCodes = new Dictionary<byte, Action<OpCode>>()
+            _opCodes = new Dictionary<byte, Action<OpCode>>()
             {
                 { 0x0, ClearOrReturn },
                 { 0x1, Jump },
@@ -57,7 +62,7 @@ namespace Chip8Emu
                 { 0xf, MiscOperations }
             };
 
-            MiscOpCodes = new Dictionary<byte, Action<OpCode>>()
+            _miscOpCodes = new Dictionary<byte, Action<OpCode>>()
             {
                 { 0x07, SetXToDelayTimer },
                 { 0x0a, ReadKey },
@@ -90,9 +95,9 @@ namespace Chip8Emu
 
         protected override void Update(GameTime gameTime)
         {
-            if (Stopwatch500Hz.Elapsed >= ElapsedTimeTarget500Hz)
+            if (_stopwatch500Hz.Elapsed >= _elapsedTimeTarget500Hz)
             {
-                var rawOpCode = (ushort)(RAM[PC++] << 8 | RAM[PC++]);
+                var rawOpCode = (ushort)(_memory[_pCounter++] << 8 | _memory[_pCounter++]);
 
                 var opCode = new OpCode
                 {
@@ -105,9 +110,9 @@ namespace Chip8Emu
                 };
 
                 var msb = (byte)(rawOpCode >> 12);
-                OpCodes[msb](opCode);
+                _opCodes[msb](opCode);
             }
-            if (Stopwatch60Hz.Elapsed >= ElapsedTimeTarget60Hz)
+            if (_stopwatch60Hz.Elapsed >= _elapsedTimeTarget60Hz)
             {
                 // TODO: Sound, I think
             }
@@ -132,7 +137,7 @@ namespace Chip8Emu
             {
                 for (int x = 0; x < 64; x++)
                 {
-                    bool isOn = DisplayBuffer[x, y];
+                    bool isOn = _displayBuffer[x, y];
                     _spriteBatch.Draw(isOn ? onPixel : offPixel, new Rectangle(x * 5, y * 5, 5, 5), Color.White);
                 }
             }
@@ -142,7 +147,7 @@ namespace Chip8Emu
 
         public void LoadProgram(byte[] rom)
         {
-            Array.Copy(rom, 0, RAM, 0x200, rom.Length);
+            Array.Copy(rom, 0, _memory, 0x200, rom.Length);
         }
 
         private void InitializeFont()
@@ -170,7 +175,7 @@ namespace Chip8Emu
         {
             for (var i = 0; i < sprite.Length; i++)
             {
-                RAM[address + i] = sprite[i];
+                _memory[address + i] = sprite[i];
             }
         }
 
@@ -179,58 +184,58 @@ namespace Chip8Emu
         {
             if (opCode.N == 0x0) // Clear display
             {
-                DisplayBuffer = new bool[64, 32];
+                _displayBuffer = new bool[64, 32];
             }
             else if (opCode.N == 0xe) // Return
             {
-                PC = Stack.Last();
-                Stack.RemoveAt(Stack.Count - 1);
+                _pCounter = _stack.Last();
+                _stack.RemoveAt(_stack.Count - 1);
             }
         }
 
         void Jump(OpCode opCode) 
         {
-            PC = opCode.NNN;
+            _pCounter = opCode.NNN;
         }
 
         void Call(OpCode opCode) 
         {
-            Stack.Add(PC);
-            PC = opCode.NNN;
+            _stack.Add(_pCounter);
+            _pCounter = opCode.NNN;
         }
 
         void SkipIfXEqual(OpCode opCode) 
         { 
-            if (V[opCode.X] == opCode.NN)
+            if (_registers[opCode.X] == opCode.NN)
             {
-                PC += 2;
+                _pCounter += 2;
             }
         }
 
         void SkipIfXNotEqual(OpCode opCode) 
         { 
-            if (V[opCode.X] != opCode.NN)
+            if (_registers[opCode.X] != opCode.NN)
             {
-                PC += 2;
+                _pCounter += 2;
             }
         }
 
         void SkipIfXEqualToY(OpCode opCode) 
         { 
-            if (V[opCode.X] == V[opCode.Y])
+            if (_registers[opCode.X] == _registers[opCode.Y])
             {
-                PC += 2;
+                _pCounter += 2;
             }
         }
 
         void SetX(OpCode opCode) 
         {
-            V[opCode.X] = opCode.NN;
+            _registers[opCode.X] = opCode.NN;
         }
 
         void IncreaseX(OpCode opCode) 
         {
-            V[opCode.X] += opCode.NN;       
+            _registers[opCode.X] += opCode.NN;       
         }
 
         void Arithmetic(OpCode opCode) 
@@ -238,37 +243,37 @@ namespace Chip8Emu
             switch (opCode.N)
             {
                 case 0x0:
-                    V[opCode.X] = V[opCode.Y];
+                    _registers[opCode.X] = _registers[opCode.Y];
                     break;
                 case 0x1:
-                    V[opCode.X] = (byte)(V[opCode.X] | V[opCode.Y]);
+                    _registers[opCode.X] = (byte)(_registers[opCode.X] | _registers[opCode.Y]);
                     break;
                 case 0x2:
-                    V[opCode.X] = (byte)(V[opCode.X] & V[opCode.Y]);
+                    _registers[opCode.X] = (byte)(_registers[opCode.X] & _registers[opCode.Y]);
                     break;
                 case 0x3:
-                    V[opCode.X] = (byte)(V[opCode.X] ^ V[opCode.Y]);
+                    _registers[opCode.X] = (byte)(_registers[opCode.X] ^ _registers[opCode.Y]);
                     break;
                 case 0x4:
-                    var sum = (byte)(V[opCode.X] + V[opCode.Y]);
-                    V[0xf] = (byte)(sum > 0xff ? 1 : 0);
-                    V[opCode.X] = sum;
+                    var sum = (byte)(_registers[opCode.X] + _registers[opCode.Y]);
+                    _registers[0xf] = (byte)(sum > 0xff ? 1 : 0);
+                    _registers[opCode.X] = sum;
                     break;
                 case 0x5:
-                    V[0xf] = (byte)(V[opCode.Y] > V[opCode.X] ? 1 : 0);
-                    V[opCode.X] = (byte)(V[opCode.X] - V[opCode.Y]);
+                    _registers[0xf] = (byte)(_registers[opCode.Y] > _registers[opCode.X] ? 1 : 0);
+                    _registers[opCode.X] = (byte)(_registers[opCode.X] - _registers[opCode.Y]);
                     break;
                 case 0x6:
-                    V[0xf] = (byte)(V[opCode.X] & 0x1);
-                    V[opCode.X] = (byte)(V[opCode.X] >> 1);
+                    _registers[0xf] = (byte)(_registers[opCode.X] & 0x1);
+                    _registers[opCode.X] = (byte)(_registers[opCode.X] >> 1);
                     break;
                 case 0x7:
-                    V[0xf] = (byte)(V[opCode.X] > V[opCode.Y] ? 1 : 0);
-                    V[opCode.X] = (byte)(V[opCode.Y] - V[opCode.X]);
+                    _registers[0xf] = (byte)(_registers[opCode.X] > _registers[opCode.Y] ? 1 : 0);
+                    _registers[opCode.X] = (byte)(_registers[opCode.Y] - _registers[opCode.X]);
                     break;
                 case 0xe:
-                    V[0xf] = (byte)(V[opCode.X] >> 3);
-                    V[opCode.X] = (byte)(V[opCode.X] << 1);
+                    _registers[0xf] = (byte)(_registers[opCode.X] >> 3);
+                    _registers[opCode.X] = (byte)(_registers[opCode.X] << 1);
                     break;
                 default:
                     break;
@@ -277,47 +282,47 @@ namespace Chip8Emu
 
         void SkipIfXNotEqualToY(OpCode opCode) 
         { 
-            if (V[opCode.X] != V[opCode.Y])
+            if (_registers[opCode.X] != _registers[opCode.Y])
             {
-                PC += 2;
+                _pCounter += 2;
             }
         }
 
         void SetI(OpCode opCode) 
         {
-            I = opCode.NNN;
+            _addressRegister = opCode.NNN;
         }
 
         void JumpWithOffset(OpCode opCode) 
         {
-            PC = (ushort)(V[0] + opCode.NNN);       
+            _pCounter = (ushort)(_registers[0] + opCode.NNN);       
         }
 
         void Random(OpCode opCode) 
         {
-            V[opCode.X] = (byte)(Rng.Next(0, 256) & opCode.NN);
+            _registers[opCode.X] = (byte)(_rng.Next(0, 256) & opCode.NN);
         }
 
         void Display(OpCode opCode) 
         {
-            V[0xF] = 0;
+            _registers[0xF] = 0;
             for (var line = 0; line < opCode.N; line++)
             {
-                var spriteForLine = RAM[I + line];
+                var spriteForLine = _memory[_addressRegister + line];
                 
                 for (var bit = 0; bit < 8; bit++)
                 {
-                    var x = V[opCode.X] + bit;
-                    var y = V[opCode.Y] + line;
+                    var x = _registers[opCode.X] + bit;
+                    var y = _registers[opCode.Y] + line;
 
-                    bool oldBit = DisplayBuffer[x, y];
+                    bool oldBit = _displayBuffer[x, y];
                     bool newBit = ((spriteForLine >> (7 - bit)) & 1) != 0;
 
-                    DisplayBuffer[x, y] = oldBit ^ newBit;
+                    _displayBuffer[x, y] = oldBit ^ newBit;
 
                     if (oldBit == true && newBit == true) // Collision
                     {
-                        V[0xF] = 1;
+                        _registers[0xF] = 1;
                     }
                 }
             }
@@ -327,55 +332,55 @@ namespace Chip8Emu
 
         void MiscOperations(OpCode opCode) 
         { 
-            if (MiscOpCodes.ContainsKey(opCode.NN))
+            if (_miscOpCodes.ContainsKey(opCode.NN))
             {
-                MiscOpCodes[opCode.NN](opCode);
+                _miscOpCodes[opCode.NN](opCode);
             }
         }
 
         void SetXToDelayTimer(OpCode opCode) 
         {
-            V[opCode.X] = DelayTimer; 
+            _registers[opCode.X] = _delayTimer; 
         }
 
         void ReadKey(OpCode opCode) { /* TODO: Implement */ }
 
         void SetDelayTimer(OpCode opCode) 
         {
-            DelayTimer = V[opCode.X];       
+            _delayTimer = _registers[opCode.X];       
         }
 
         void SetSoundTimer(OpCode opCode) { /* TODO: Implement */ }
 
         void AddXToI(OpCode opCode) 
         {
-            I += V[opCode.X];       
+            _addressRegister += _registers[opCode.X];       
         }
 
         void SetIToCharacter(OpCode opCode) 
         {
-            I = RAM[5 * opCode.X];
+            _addressRegister = _memory[5 * opCode.X];
         }
 
         void BinaryCodedDecimal(OpCode opCode) 
         {
-            var value = (int)(V[opCode.X]);
+            var value = (int)(_registers[opCode.X]);
 
             // Hundreds
-            RAM[I] = (byte)(((value % 1000) - (value % 100)) / 100);
+            _memory[_addressRegister] = (byte)(((value % 1000) - (value % 100)) / 100);
 
             // Tens
-            RAM[I] = (byte)(((value % 100) - (value % 10)) / 10);
+            _memory[_addressRegister] = (byte)(((value % 100) - (value % 10)) / 10);
 
             // Ones
-            RAM[I] = (byte)(value % 10);
+            _memory[_addressRegister] = (byte)(value % 10);
         }
 
         void DumpRegisters(OpCode opCode) 
         {
             for (byte index = 0; index < opCode.X; index++)
             {
-                RAM[I + index] = V[index];
+                _memory[_addressRegister + index] = _registers[index];
             }
         }
 
@@ -383,7 +388,7 @@ namespace Chip8Emu
         { 
             for (byte index = 0; index < opCode.X; index++)
             {
-                V[index] = RAM[I + index];
+                _registers[index] = _memory[_addressRegister + index];
             }
         }
     }
