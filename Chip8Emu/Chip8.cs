@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -38,6 +39,10 @@ namespace Chip8Emu
         private readonly Stopwatch _stopwatch60Hz = Stopwatch.StartNew();
         private readonly TimeSpan _elapsedTimeTarget60Hz = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60);
 
+        // User input
+        private Dictionary<Keys, byte> _keyValues;
+        private byte _currentKeyValue = 0x00;
+
 
         readonly Random _rng = new Random();
 
@@ -47,6 +52,26 @@ namespace Chip8Emu
             _graphics = new GraphicsDeviceManager(this);
             Window.AllowUserResizing = true;
             Window.ClientSizeChanged += OnResize;
+
+            _keyValues = new Dictionary<Keys, byte>() 
+            {
+                { Keys.NumPad0, 0x00 },
+                { Keys.NumPad1, 0x01 },
+                { Keys.NumPad2, 0x02 },
+                { Keys.NumPad3, 0x03 },
+                { Keys.NumPad4, 0x04 },
+                { Keys.NumPad5, 0x05 },
+                { Keys.NumPad6, 0x06 },
+                { Keys.NumPad7, 0x07 },
+                { Keys.NumPad8, 0x08 },
+                { Keys.NumPad9, 0x09 },
+                { Keys.A, 0x0A },
+                { Keys.B, 0x0B },
+                { Keys.C, 0x0C },
+                { Keys.D, 0x0D },
+                { Keys.E, 0x0E },
+                { Keys.F, 0x0F },
+            };
 
             _opCodes = new Dictionary<byte, Action<OpCode>>()
             {
@@ -113,6 +138,7 @@ namespace Chip8Emu
         {
             if (_stopwatch500Hz.Elapsed >= _elapsedTimeTarget500Hz)
             {
+                HandleInput();
                 var rawOpCode = (ushort)(_memory[_pCounter++] << 8 | _memory[_pCounter++]);
 
                 var opCode = new OpCode
@@ -134,6 +160,21 @@ namespace Chip8Emu
             }
 
             base.Update(gameTime);
+        }
+
+        private void HandleInput()
+        {
+            var keyboardState = Keyboard.GetState();
+
+            if (keyboardState.IsKeyDown(Keys.Escape))
+                Exit();
+
+            var pressedKey = keyboardState.GetPressedKeys().Where(k => _keyValues.Keys.Contains(k)).FirstOrDefault();
+
+            if (pressedKey != Keys.None)
+            {
+                _currentKeyValue = _keyValues[pressedKey];
+            }
         }
 
         protected override void Draw(GameTime gameTime)
