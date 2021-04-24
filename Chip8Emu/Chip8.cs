@@ -40,7 +40,7 @@ namespace Chip8Emu
         private readonly TimeSpan _elapsedTimeTarget60Hz = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60);
 
         // User input
-        private Dictionary<Keys, byte> _keyValues;
+        private Dictionary<Keys, byte> _keyToValue;
         private byte _currentKeyValue = 0x00;
 
 
@@ -53,7 +53,7 @@ namespace Chip8Emu
             Window.AllowUserResizing = true;
             Window.ClientSizeChanged += OnResize;
 
-            _keyValues = new Dictionary<Keys, byte>() 
+            _keyToValue = new Dictionary<Keys, byte>() 
             {
                 { Keys.NumPad0, 0x00 },
                 { Keys.NumPad1, 0x01 },
@@ -70,7 +70,7 @@ namespace Chip8Emu
                 { Keys.C, 0x0C },
                 { Keys.D, 0x0D },
                 { Keys.E, 0x0E },
-                { Keys.F, 0x0F },
+                { Keys.F, 0x0F }
             };
 
             _opCodes = new Dictionary<byte, Action<OpCode>>()
@@ -169,11 +169,11 @@ namespace Chip8Emu
             if (keyboardState.IsKeyDown(Keys.Escape))
                 Exit();
 
-            var pressedKey = keyboardState.GetPressedKeys().Where(k => _keyValues.Keys.Contains(k)).FirstOrDefault();
+            var pressedKey = keyboardState.GetPressedKeys().Where(k => _keyToValue.Keys.Contains(k)).FirstOrDefault();
 
             if (pressedKey != Keys.None)
             {
-                _currentKeyValue = _keyValues[pressedKey];
+                _currentKeyValue = _keyToValue[pressedKey];
             }
         }
 
@@ -388,7 +388,16 @@ namespace Chip8Emu
             }
         }
 
-        private void SkipOnKey(OpCode opCode) { /* TODO: Implement */ }
+        private void SkipOnKey(OpCode opCode) 
+        {
+            var keyValue = _registers[opCode.X];
+
+            if ((opCode.NN == 0x9E && keyValue == _currentKeyValue) // if (key == Vx)
+                || (opCode.NN == 0xA1 && keyValue != _currentKeyValue)) // if (key != Vx)
+            {
+                _pCounter += 2;
+            }
+        }
 
         private void MiscOperations(OpCode opCode) 
         { 
