@@ -107,7 +107,7 @@ namespace Chip8Emu
             };
 
             InitializeFont();
-            LoadProgram(File.ReadAllBytes(@"C:\dev\Chip8Emu\roms\test_opcode.ch8"));
+            LoadProgram(File.ReadAllBytes(@"C:\dev\Chip8Emu\roms\pong.ch8"));
         }
 
         protected override void Initialize()
