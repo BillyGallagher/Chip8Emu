@@ -156,7 +156,8 @@ namespace Chip8Emu
             }
             if (_stopwatch60Hz.Elapsed >= _elapsedTimeTarget60Hz)
             {
-                // TODO: Sound, I think
+                _delayTimer--;
+                _stopwatch60Hz.Restart();
             }
 
             base.Update(gameTime);
