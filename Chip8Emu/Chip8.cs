@@ -373,8 +373,8 @@ namespace Chip8Emu
                 
                 for (var bit = 0; bit < 8; bit++)
                 {
-                    var x = _registers[opCode.X] + bit;
-                    var y = _registers[opCode.Y] + line;
+                    var x = (_registers[opCode.X] + bit) % 64;
+                    var y = (_registers[opCode.Y] + line) % 32;
 
                     bool oldBit = _displayBuffer[x, y];
                     bool newBit = ((spriteForLine >> (7 - bit)) & 1) != 0;
