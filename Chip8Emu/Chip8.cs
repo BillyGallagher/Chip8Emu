@@ -178,6 +178,26 @@ namespace Chip8Emu
             }
         }
 
+        private void WaitForInput()
+        {
+            var keyboardState = Keyboard.GetState();
+
+            while (keyboardState.GetPressedKeys() == null)
+            {
+                keyboardState.GetPressedKeys();
+            }
+
+            if (keyboardState.IsKeyDown(Keys.Escape))
+                Exit();
+
+            var pressedKey = keyboardState.GetPressedKeys().Where(k => _keyToValue.Keys.Contains(k)).FirstOrDefault();
+
+            if (pressedKey != Keys.None)
+            {
+                _currentKeyValue = _keyToValue[pressedKey];
+            }
+        }
+
         protected override void Draw(GameTime gameTime)
         {
             _spriteBatch.Begin(SpriteSortMode.Immediate, null, null, null, null, null, _globalTransform);
@@ -413,7 +433,11 @@ namespace Chip8Emu
             _registers[opCode.X] = _delayTimer; 
         }
 
-        private void ReadKey(OpCode opCode) { /* TODO: Implement */ }
+        private void ReadKey(OpCode opCode) 
+        {
+            WaitForInput();
+            _registers[opCode.X] = _currentKeyValue;
+        }
 
         private void SetDelayTimer(OpCode opCode) 
         {
