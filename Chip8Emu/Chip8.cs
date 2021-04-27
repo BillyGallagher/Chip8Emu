@@ -153,6 +153,7 @@ namespace Chip8Emu
 
                 var msb = (byte)(rawOpCode >> 12);
                 _opCodes[msb](opCode);
+                _stopwatch500Hz.Restart();
             }
             if (_stopwatch60Hz.Elapsed >= _elapsedTimeTarget60Hz)
             {
