@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -38,6 +39,10 @@ namespace Chip8Emu
         private readonly Stopwatch _stopwatch60Hz = Stopwatch.StartNew();
         private readonly TimeSpan _elapsedTimeTarget60Hz = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60);
 
+        // User input
+        private Dictionary<Keys, byte> _keyToValue;
+        private byte _currentKeyValue = 0x00;
+
 
         readonly Random _rng = new Random();
 
@@ -47,6 +52,26 @@ namespace Chip8Emu
             _graphics = new GraphicsDeviceManager(this);
             Window.AllowUserResizing = true;
             Window.ClientSizeChanged += OnResize;
+
+            _keyToValue = new Dictionary<Keys, byte>() 
+            {
+                { Keys.NumPad0, 0x00 },
+                { Keys.NumPad1, 0x01 },
+                { Keys.NumPad2, 0x02 },
+                { Keys.NumPad3, 0x03 },
+                { Keys.NumPad4, 0x04 },
+                { Keys.NumPad5, 0x05 },
+                { Keys.NumPad6, 0x06 },
+                { Keys.NumPad7, 0x07 },
+                { Keys.NumPad8, 0x08 },
+                { Keys.NumPad9, 0x09 },
+                { Keys.A, 0x0A },
+                { Keys.B, 0x0B },
+                { Keys.C, 0x0C },
+                { Keys.D, 0x0D },
+                { Keys.E, 0x0E },
+                { Keys.F, 0x0F }
+            };
 
             _opCodes = new Dictionary<byte, Action<OpCode>>()
             {
@@ -82,7 +107,7 @@ namespace Chip8Emu
             };
 
             InitializeFont();
-            LoadProgram(File.ReadAllBytes(@"C:\dev\Chip8Emu\roms\test_opcode.ch8"));
+            LoadProgram(File.ReadAllBytes(@"C:\dev\Chip8Emu\roms\pong.ch8"));
         }
 
         protected override void Initialize()
@@ -113,6 +138,7 @@ namespace Chip8Emu
         {
             if (_stopwatch500Hz.Elapsed >= _elapsedTimeTarget500Hz)
             {
+                HandleInput();
                 var rawOpCode = (ushort)(_memory[_pCounter++] << 8 | _memory[_pCounter++]);
 
                 var opCode = new OpCode
@@ -130,10 +156,46 @@ namespace Chip8Emu
             }
             if (_stopwatch60Hz.Elapsed >= _elapsedTimeTarget60Hz)
             {
-                // TODO: Sound, I think
+                _delayTimer--;
+                _stopwatch60Hz.Restart();
             }
 
             base.Update(gameTime);
+        }
+
+        private void HandleInput()
+        {
+            var keyboardState = Keyboard.GetState();
+
+            if (keyboardState.IsKeyDown(Keys.Escape))
+                Exit();
+
+            var pressedKey = keyboardState.GetPressedKeys().Where(k => _keyToValue.Keys.Contains(k)).FirstOrDefault();
+
+            if (pressedKey != Keys.None)
+            {
+                _currentKeyValue = _keyToValue[pressedKey];
+            }
+        }
+
+        private void WaitForInput()
+        {
+            var keyboardState = Keyboard.GetState();
+
+            while (keyboardState.GetPressedKeys() == null)
+            {
+                keyboardState.GetPressedKeys();
+            }
+
+            if (keyboardState.IsKeyDown(Keys.Escape))
+                Exit();
+
+            var pressedKey = keyboardState.GetPressedKeys().Where(k => _keyToValue.Keys.Contains(k)).FirstOrDefault();
+
+            if (pressedKey != Keys.None)
+            {
+                _currentKeyValue = _keyToValue[pressedKey];
+            }
         }
 
         protected override void Draw(GameTime gameTime)
@@ -331,8 +393,8 @@ namespace Chip8Emu
                 
                 for (var bit = 0; bit < 8; bit++)
                 {
-                    var x = _registers[opCode.X] + bit;
-                    var y = _registers[opCode.Y] + line;
+                    var x = (_registers[opCode.X] + bit) % 64;
+                    var y = (_registers[opCode.Y] + line) % 32;
 
                     bool oldBit = _displayBuffer[x, y];
                     bool newBit = ((spriteForLine >> (7 - bit)) & 1) != 0;
@@ -347,7 +409,16 @@ namespace Chip8Emu
             }
         }
 
-        private void SkipOnKey(OpCode opCode) { /* TODO: Implement */ }
+        private void SkipOnKey(OpCode opCode) 
+        {
+            var keyValue = _registers[opCode.X];
+
+            if ((opCode.NN == 0x9E && keyValue == _currentKeyValue) // if (key == Vx)
+                || (opCode.NN == 0xA1 && keyValue != _currentKeyValue)) // if (key != Vx)
+            {
+                _pCounter += 2;
+            }
+        }
 
         private void MiscOperations(OpCode opCode) 
         { 
@@ -362,7 +433,11 @@ namespace Chip8Emu
             _registers[opCode.X] = _delayTimer; 
         }
 
-        private void ReadKey(OpCode opCode) { /* TODO: Implement */ }
+        private void ReadKey(OpCode opCode) 
+        {
+            WaitForInput();
+            _registers[opCode.X] = _currentKeyValue;
+        }
 
         private void SetDelayTimer(OpCode opCode) 
         {
