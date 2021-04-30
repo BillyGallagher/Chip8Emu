@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Chip8Emu
+namespace Chip8Emu.Models
 {
-    class OpCode
+    public class OpCode
     {
         public ushort FullOpCode;
         public ushort NNN { get; set; }

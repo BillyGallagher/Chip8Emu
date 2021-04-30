@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Chip8Emu
+﻿namespace Chip8Emu.Resources
 {
     // Reference: http://devernay.free.fr/hacks/chip8/C8TECH10.HTM#2.4
     static class FontSprites
