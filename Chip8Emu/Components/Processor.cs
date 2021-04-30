@@ -11,6 +11,7 @@ namespace Chip8Emu.Components
         // Memory and registers
         private ushort _pCounter = 0x200;
         private readonly Memory _memory;
+        private bool[,] _displayBuffer;
 
         // OpCodes
         private Dictionary<byte, Action<OpCode>> _opCodes;
@@ -28,7 +29,6 @@ namespace Chip8Emu.Components
         private readonly TimeSpan _elapsedTimeTarget60Hz = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60);
 
 
-        private bool[,] _displayBuffer;
         private readonly Random _rng = new Random();
 
 

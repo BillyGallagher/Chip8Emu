@@ -19,17 +19,14 @@ namespace Chip8Emu
         private SpriteBatch _spriteBatch;
         private Vector2 _baseScreenSize = new Vector2(64 * 5, 32 * 5);
         private Matrix _globalTransform;
+        private bool[,] _displayBuffer = new bool[64, 32];
 
         // User input
         private Dictionary<Keys, byte> _keyToValue;
 
-
         private readonly List<Display> _displays = new List<Display>();
         private readonly Processor _processor;
         private readonly Memory _memory;
-
-
-        private bool[,] _displayBuffer = new bool[64, 32];
 
         public Chip8()
         {
