@@ -17,7 +17,7 @@ namespace Chip8Emu
         // Graphics
         private GraphicsDeviceManager _graphics;
         private SpriteBatch _spriteBatch;
-        private Vector2 _baseScreenSize = new Vector2(64 * 5, 32 * 5);
+        private Vector2 _baseScreenSize = new Vector2(100, 32);
         private Matrix _globalTransform;
         private bool[,] _displayBuffer = new bool[64, 32];
 
@@ -66,7 +66,8 @@ namespace Chip8Emu
         {
             // TODO: Figure out dimensions
             ScaleDisplayArea();
-            _displays.Add(new Chip8Display(_displayBuffer, GraphicsDevice, 0, 0, 64, 32));
+            _displays.Add(new Chip8Display(_displayBuffer, new Vector2(0, 0), new Vector2(64, 32), GraphicsDevice));
+            _displays.Add(new RegisterDisplay(_memory, new Vector2(64, 0), new Vector2(36, 32), GraphicsDevice));
             base.Initialize();
         }
 
