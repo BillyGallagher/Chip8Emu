@@ -12,12 +12,10 @@ namespace Chip8Emu.Displays
         public Chip8Display(
             bool[,] displayBuffer,
             Vector2 position,
-            Vector2 size,
-            GraphicsDevice graphicsDevice) : base(position, size, graphicsDevice) 
+            Vector2 size) : base(position, size) 
 
         {
             _displayBuffer = displayBuffer;
-            CreatePixels(graphicsDevice);
         }
 
         public override void Draw(SpriteBatch spriteBatch, GameTime gameTime) 
@@ -32,17 +30,11 @@ namespace Chip8Emu.Displays
             }
         }
 
-        private void CreatePixels(GraphicsDevice graphicsDevice)
+        public override void Initialize(GraphicsDevice graphicsDevice)
         {
-            //_onPixel = new Texture2D(graphicsDevice, 5, 5);
-            //Color[] onData = new Color[5 * 5];
-            //for (int i = 0; i < onData.Length; i++) { onData[i] = Color.White; }
             _onPixel = new Texture2D(graphicsDevice, 1, 1);
             _onPixel.SetData(new[] { Color.White });
 
-            //_offPixel = new Texture2D(graphicsDevice, 5, 5);
-            //Color[] offData = new Color[5 * 5];
-            //for (int i = 0; i < offData.Length; i++) { offData[i] = Color.Black; }
             _offPixel = new Texture2D(graphicsDevice, 1, 1);
             _offPixel.SetData(new[] { Color.Black });
         }

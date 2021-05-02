@@ -60,14 +60,17 @@ namespace Chip8Emu
 
             _memory = new Memory(File.ReadAllBytes(@"C:\dev\Chip8Emu\roms\pong.ch8"));
             _processor = new Processor(_memory, _displayBuffer);
+
+            _displays.Add(new Chip8Display(_displayBuffer, new Vector2(0, 0), new Vector2(64, 32)));
+            _displays.Add(new RegisterDisplay(_memory, new Vector2(64, 0), new Vector2(36, 32)));
         }
 
         protected override void Initialize()
         {
-            // TODO: Figure out dimensions
             ScaleDisplayArea();
-            _displays.Add(new Chip8Display(_displayBuffer, new Vector2(0, 0), new Vector2(64, 32), GraphicsDevice));
-            _displays.Add(new RegisterDisplay(_memory, new Vector2(64, 0), new Vector2(36, 32), GraphicsDevice));
+
+            _displays.ForEach(x => x.Initialize(GraphicsDevice));
+
             base.Initialize();
         }
 
@@ -108,10 +111,7 @@ namespace Chip8Emu
         {
             _spriteBatch.Begin(SpriteSortMode.Immediate, null, null, null, null, null, _globalTransform);
 
-            foreach (var display in _displays)
-            {
-                display.Draw(_spriteBatch, gameTime);
-            }
+            _displays.ForEach(x => x.Draw(_spriteBatch, gameTime));
 
             _spriteBatch.End();
         }

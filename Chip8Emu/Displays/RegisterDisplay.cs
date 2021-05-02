@@ -12,10 +12,9 @@ namespace Chip8Emu.Displays
         private readonly Memory _memory;
         private Texture2D _texture;
 
-        public RegisterDisplay(Memory memory, Vector2 position, Vector2 size, GraphicsDevice graphicsDevice) : base(position, size, graphicsDevice)
+        public RegisterDisplay(Memory memory, Vector2 position, Vector2 size) : base(position, size)
         {
             _memory = memory;
-            InitializeTexture();
         }
 
         public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
@@ -23,9 +22,9 @@ namespace Chip8Emu.Displays
             spriteBatch.Draw(_texture, _position, Color.White);
         }
 
-        private void InitializeTexture()
+        public override void Initialize(GraphicsDevice graphicsDevice)
         {
-            _texture = new Texture2D(_graphicsDevice, (int)_size.X, (int)_size.Y);
+            _texture = new Texture2D(graphicsDevice, (int)_size.X, (int)_size.Y);
             Color[] textureData = new Color[(int)_size.X * (int)_size.Y];
             for (int i = 0; i < textureData.Length; i++) { textureData[i] = Color.PowderBlue; };
             _texture.SetData(textureData);
