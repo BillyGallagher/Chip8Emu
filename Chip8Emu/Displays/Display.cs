@@ -14,6 +14,6 @@ namespace Chip8Emu.Displays
         }
 
         public abstract void Draw(SpriteBatch spriteBatch, GameTime gameTime);
-        public abstract void Initialize(GraphicsDevice graphicsDevice);
+        public abstract void LoadContent(GraphicsDevice graphicsDevice);
     }
 }

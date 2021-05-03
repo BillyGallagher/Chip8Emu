@@ -17,7 +17,7 @@ namespace Chip8Emu
         // Graphics
         private GraphicsDeviceManager _graphics;
         private SpriteBatch _spriteBatch;
-        private Vector2 _baseScreenSize = new Vector2(100, 32);
+        private Vector2 _baseScreenSize = new Vector2(1000, 320);
         private Matrix _globalTransform;
         private bool[,] _displayBuffer = new bool[64, 32];
 
@@ -61,22 +61,22 @@ namespace Chip8Emu
             _memory = new Memory(File.ReadAllBytes(@"C:\dev\Chip8Emu\roms\pong.ch8"));
             _processor = new Processor(_memory, _displayBuffer);
 
-            _displays.Add(new Chip8Display(_displayBuffer, new Vector2(0, 0), new Vector2(64, 32)));
-            _displays.Add(new RegisterDisplay(_memory, new Vector2(64, 0), new Vector2(36, 32)));
+            _displays.Add(new Chip8Display(_displayBuffer, new Vector2(0, 0), new Vector2(640, 320)));
+            _displays.Add(new RegisterDisplay(_memory, Content, new Vector2(640, 0), new Vector2(360, 320)));
         }
 
         protected override void Initialize()
         {
             ScaleDisplayArea();
-
-            _displays.ForEach(x => x.Initialize(GraphicsDevice));
-
             base.Initialize();
         }
 
         protected override void LoadContent()
         {
+            Content.RootDirectory = "Content";
+
             _spriteBatch = new SpriteBatch(GraphicsDevice);
+            _displays.ForEach(x => x.LoadContent(GraphicsDevice));
 
             base.LoadContent();
         }

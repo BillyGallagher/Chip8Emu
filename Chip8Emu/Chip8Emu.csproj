@@ -15,11 +15,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Content\Content.mgcb" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.0.1641" />
     <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.0.1641" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Content\" />
+    <MonoGameContentReference Include="Content\Content.mgcb" />
   </ItemGroup>
 
 </Project>

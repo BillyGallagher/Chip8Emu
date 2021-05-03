@@ -25,12 +25,12 @@ namespace Chip8Emu.Displays
                 for (int x = 0; x < 64; x++)
                 {
                     bool isOn = _displayBuffer[x, y];
-                    spriteBatch.Draw(isOn ? _onPixel : _offPixel, new Rectangle(x, y, 1, 1), Color.White);
+                    spriteBatch.Draw(isOn ? _onPixel : _offPixel, new Rectangle(x * 10, y * 10, 10, 10), Color.White);
                 }
             }
         }
 
-        public override void Initialize(GraphicsDevice graphicsDevice)
+        public override void LoadContent(GraphicsDevice graphicsDevice)
         {
             _onPixel = new Texture2D(graphicsDevice, 1, 1);
             _onPixel.SetData(new[] { Color.White });
