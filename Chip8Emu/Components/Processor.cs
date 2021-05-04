@@ -16,6 +16,7 @@ namespace Chip8Emu.Components
         // OpCodes
         private Dictionary<byte, Action<OpCode>> _opCodes;
         private Dictionary<byte, Action<OpCode>> _miscOpCodes;
+        public OpCode CurrentOpCode { get; private set; }
 
         // Blocking OpCode (wait for input)
         private bool _waitingForInput = false;
@@ -64,6 +65,7 @@ namespace Chip8Emu.Components
                         X = (byte)((rawOpCode & 0x0f00) >> 8),
                         Y = (byte)((rawOpCode & 0x00f0) >> 4)
                     };
+                    CurrentOpCode = opCode;
 
                     var msb = (byte)(rawOpCode >> 12);
                     _opCodes[msb](opCode);

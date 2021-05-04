@@ -62,7 +62,8 @@ namespace Chip8Emu
             _processor = new Processor(_memory, _displayBuffer);
 
             _displays.Add(new Chip8Display(_displayBuffer, new Vector2(0, 0), new Vector2(640, 320)));
-            _displays.Add(new RegisterDisplay(_memory, Content, new Vector2(640, 0), new Vector2(360, 320)));
+            _displays.Add(new RegisterDisplay(_memory, Content, new Vector2(640, 0), new Vector2(360, 200)));
+            _displays.Add(new InstructionDisplay(_processor, Content, new Vector2(640, 200), new Vector2(640, 320)));
         }
 
         protected override void Initialize()
