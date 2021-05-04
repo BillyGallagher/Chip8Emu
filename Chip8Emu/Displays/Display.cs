@@ -5,16 +5,15 @@ namespace Chip8Emu.Displays
 {
     public abstract class Display
     {
-        protected int _xPos, _yPos, _width, _height;
+        protected Vector2 _position, _size;
 
-        public Display(int xPos, int yPos, int width, int height) 
+        public Display(Vector2 position, Vector2 size) 
         {
-            _xPos = xPos;
-            _yPos = yPos;
-            _width = width;
-            _height = height;
+            _position = position;
+            _size = size;
         }
 
         public abstract void Draw(SpriteBatch spriteBatch, GameTime gameTime);
+        public abstract void LoadContent(GraphicsDevice graphicsDevice);
     }
 }

@@ -11,14 +11,11 @@ namespace Chip8Emu.Displays
 
         public Chip8Display(
             bool[,] displayBuffer,
-            GraphicsDevice graphicsDevice,
-            int xPos,
-            int yPos,
-            int width,
-            int height) : base(xPos, yPos, width, height) 
+            Vector2 position,
+            Vector2 size) : base(position, size) 
+
         {
             _displayBuffer = displayBuffer;
-            CreatePixels(graphicsDevice);
         }
 
         public override void Draw(SpriteBatch spriteBatch, GameTime gameTime) 
@@ -28,23 +25,18 @@ namespace Chip8Emu.Displays
                 for (int x = 0; x < 64; x++)
                 {
                     bool isOn = _displayBuffer[x, y];
-                    spriteBatch.Draw(isOn ? _onPixel : _offPixel, new Rectangle(x * 5, y * 5, 5, 5), Color.White);
+                    spriteBatch.Draw(isOn ? _onPixel : _offPixel, new Rectangle(x * 10, y * 10, 10, 10), Color.White);
                 }
             }
         }
 
-        private void CreatePixels(GraphicsDevice graphicsDevice)
+        public override void LoadContent(GraphicsDevice graphicsDevice)
         {
-            _onPixel = new Texture2D(graphicsDevice, 5, 5);
-            Color[] onData = new Color[5 * 5];
-            for (int i = 0; i < onData.Length; i++) { onData[i] = Color.White; }
-            _onPixel.SetData(onData);
+            _onPixel = new Texture2D(graphicsDevice, 1, 1);
+            _onPixel.SetData(new[] { Color.White });
 
-            _offPixel = new Texture2D(graphicsDevice, 5, 5);
-            Color[] offData = new Color[5 * 5];
-            for (int i = 0; i < offData.Length; i++) { offData[i] = Color.Black; }
-            _offPixel.SetData(offData);
-
+            _offPixel = new Texture2D(graphicsDevice, 1, 1);
+            _offPixel.SetData(new[] { Color.Black });
         }
     }
 }
