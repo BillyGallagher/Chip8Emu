@@ -16,6 +16,7 @@ namespace Chip8Emu.Components
         // OpCodes
         private Dictionary<byte, Action<OpCode>> _opCodes;
         private Dictionary<byte, Action<OpCode>> _miscOpCodes;
+        public OpCode CurrentOpCode { get; private set; }
 
         // Blocking OpCode (wait for input)
         private bool _waitingForInput = false;
@@ -30,6 +31,7 @@ namespace Chip8Emu.Components
 
 
         private readonly Random _rng = new Random();
+        private bool _paused;
 
 
         public byte CurrentKeyValue { get;  set; } = 0x00;
@@ -43,6 +45,9 @@ namespace Chip8Emu.Components
 
         public void Update()
         {
+            if (_paused)
+                return;
+
             if (_stopwatch500Hz.Elapsed >= _elapsedTimeTarget500Hz)
             {
                 if (_waitingForInput && CurrentKeyValue != 0x00)
@@ -64,6 +69,7 @@ namespace Chip8Emu.Components
                         X = (byte)((rawOpCode & 0x0f00) >> 8),
                         Y = (byte)((rawOpCode & 0x00f0) >> 4)
                     };
+                    CurrentOpCode = opCode;
 
                     var msb = (byte)(rawOpCode >> 12);
                     _opCodes[msb](opCode);
@@ -74,6 +80,11 @@ namespace Chip8Emu.Components
                 _delayTimer--;
                 _stopwatch60Hz.Restart();
             }
+        }
+
+        public void TogglePause()
+        {
+            _paused = !_paused;
         }
 
         #region Helpers

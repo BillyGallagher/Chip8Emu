@@ -8,12 +8,11 @@ using System.Text;
 
 namespace Chip8Emu.Displays
 {
-    public class RegisterDisplay : Display
+    public class InstructionDisplay : Display
     {
-        private readonly Memory _memory;
+        private readonly Processor _processor;
         private readonly ContentManager _contentManager;
 
-        // This should probably be an actual sprite loaded through the content manager
         private Texture2D _background;
         private Color _backgroundColor = Color.Black;
         private Texture2D _border;
@@ -22,14 +21,9 @@ namespace Chip8Emu.Displays
         private SpriteFont _font;
         private Color _fontColor = Color.White;
 
-        // For display columns
-        private const int xOffset = 180;
-        private const int yOffset = 20;
-
-
-        public RegisterDisplay(Memory memory, ContentManager contentManager, Vector2 position, Vector2 size) : base(position, size)
+        public InstructionDisplay(Processor processor, ContentManager contentManager, Vector2 position, Vector2 size) : base(position, size) 
         {
-            _memory = memory;
+            _processor = processor;
             _contentManager = contentManager;
         }
 
@@ -37,9 +31,8 @@ namespace Chip8Emu.Displays
         {
             spriteBatch.Draw(_background, _position, Color.White);
             spriteBatch.Draw(_border, new Rectangle((int)_position.X, (int)_position.Y, 5, (int)_size.Y), Color.White);
-            spriteBatch.Draw(_border, new Rectangle((int)_position.X, (int)_position.Y + (int)_size.Y - 5, (int)_size.X, 5), Color.White);
-            DrawRegisterValues(spriteBatch);
 
+            spriteBatch.DrawString(_font, $"Current Instruction: 0x{_processor.CurrentOpCode.FullOpCode:X2}", new Vector2(_position.X + 5, _position.Y + 5), _fontColor);
             base.Draw(spriteBatch, gameTime);
         }
 
@@ -55,33 +48,6 @@ namespace Chip8Emu.Displays
 
             _font = _contentManager.Load<SpriteFont>("Display");
             base.LoadContent(graphicsDevice);
-        }
-
-        private void DrawRegisterValues(SpriteBatch spriteBatch)
-        {
-            int i = 0;
-            string text;
-            Vector2 pos = new Vector2(_position.X + 10, _position.Y + 10);
-
-            while (i < 16)
-            {
-                text = $"R{i + 1}: 0x{_memory.Registers[i]:X2}";
-
-                spriteBatch.DrawString(_font, text, pos, _fontColor);
-
-                if (i % 2 == 0) {
-                    pos.X += xOffset;
-                }
-                else
-                {
-                    pos.X -= xOffset;
-                    pos.Y += yOffset;
-                }
-
-                i++;
-            }
-
-            spriteBatch.DrawString(_font, $"I: 0x{_memory.AddressRegister:X2}", pos, _fontColor);
         }
     }
 }
