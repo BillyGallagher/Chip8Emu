@@ -39,6 +39,8 @@ namespace Chip8Emu.Displays
             spriteBatch.Draw(_border, new Rectangle((int)_position.X, (int)_position.Y, 5, (int)_size.Y), Color.White);
             spriteBatch.Draw(_border, new Rectangle((int)_position.X, (int)_position.Y + (int)_size.Y - 5, (int)_size.X, 5), Color.White);
             DrawRegisterValues(spriteBatch);
+
+            base.Draw(spriteBatch, gameTime);
         }
 
         public override void LoadContent(GraphicsDevice graphicsDevice)
@@ -52,6 +54,7 @@ namespace Chip8Emu.Displays
             _border.SetData(new[] { _borderColor });
 
             _font = _contentManager.Load<SpriteFont>("Display");
+            base.LoadContent(graphicsDevice);
         }
 
         private void DrawRegisterValues(SpriteBatch spriteBatch)

@@ -1,4 +1,5 @@
 ﻿using Chip8Emu.Components;
+using Chip8Emu.Controls;
 using Chip8Emu.Displays;
 using Chip8Emu.Models;
 using Microsoft.Xna.Framework;
@@ -23,6 +24,8 @@ namespace Chip8Emu
 
         // User input
         private Dictionary<Keys, byte> _keyToValue;
+        private KeyboardState _keyboardState;
+        private MouseState _mouseState;
 
         private readonly List<Display> _displays = new List<Display>();
         private readonly Processor _processor;
@@ -31,7 +34,8 @@ namespace Chip8Emu
         public Chip8()
         {
             _graphics = new GraphicsDeviceManager(this);
-            Window.AllowUserResizing = true;
+
+            Window.AllowUserResizing = false; // TODO: Renable once click detection is fixed
             Window.ClientSizeChanged += OnResize;
 
             _keyToValue = new Dictionary<Keys, byte>() 
@@ -63,12 +67,21 @@ namespace Chip8Emu
 
             _displays.Add(new Chip8Display(_displayBuffer, new Vector2(0, 0), new Vector2(640, 320)));
             _displays.Add(new RegisterDisplay(_memory, Content, new Vector2(640, 0), new Vector2(360, 200)));
-            _displays.Add(new InstructionDisplay(_processor, Content, new Vector2(640, 200), new Vector2(640, 320)));
+
+            var instructionDisplay = new InstructionDisplay(_processor, Content, new Vector2(640, 200), new Vector2(640, 320));
+            var playPauseButton = new PlayPauseButton(new Vector2(650, 280), new Vector2(30, 30));
+            playPauseButton.OnClick = _processor.TogglePause;
+            instructionDisplay.AddControl(playPauseButton);
+            _displays.Add(instructionDisplay);
         }
 
         protected override void Initialize()
         {
+            _graphics.PreferredBackBufferWidth = 1000;
+            _graphics.PreferredBackBufferHeight = 320;
+            _graphics.ApplyChanges();
             ScaleDisplayArea();
+            IsMouseVisible = true;
             base.Initialize();
         }
 
@@ -86,17 +99,19 @@ namespace Chip8Emu
         {
             HandleInput();
             _processor.Update();
+            _displays.ForEach(x => x.Update(gameTime, _keyboardState, _mouseState));
             base.Update(gameTime);
         }
 
         private void HandleInput()
         {
-            var keyboardState = Keyboard.GetState();
+            _keyboardState = Keyboard.GetState();
+            _mouseState = Mouse.GetState();
 
-            if (keyboardState.IsKeyDown(Keys.Escape))
+            if (_keyboardState.IsKeyDown(Keys.Escape))
                 Exit();
 
-            var pressedKey = keyboardState.GetPressedKeys().Where(k => _keyToValue.Keys.Contains(k)).LastOrDefault();
+            var pressedKey = _keyboardState.GetPressedKeys().Where(k => _keyToValue.Keys.Contains(k)).LastOrDefault();
 
             if (pressedKey != Keys.None)
             {

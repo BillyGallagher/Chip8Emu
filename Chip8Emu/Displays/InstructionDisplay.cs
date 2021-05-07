@@ -33,6 +33,7 @@ namespace Chip8Emu.Displays
             spriteBatch.Draw(_border, new Rectangle((int)_position.X, (int)_position.Y, 5, (int)_size.Y), Color.White);
 
             spriteBatch.DrawString(_font, $"Current Instruction: 0x{_processor.CurrentOpCode.FullOpCode:X2}", new Vector2(_position.X + 5, _position.Y + 5), _fontColor);
+            base.Draw(spriteBatch, gameTime);
         }
 
         public override void LoadContent(GraphicsDevice graphicsDevice)
@@ -46,6 +47,7 @@ namespace Chip8Emu.Displays
             _border.SetData(new[] { _borderColor });
 
             _font = _contentManager.Load<SpriteFont>("Display");
+            base.LoadContent(graphicsDevice);
         }
     }
 }

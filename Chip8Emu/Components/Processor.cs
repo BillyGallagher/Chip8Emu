@@ -31,6 +31,7 @@ namespace Chip8Emu.Components
 
 
         private readonly Random _rng = new Random();
+        private bool _paused;
 
 
         public byte CurrentKeyValue { get;  set; } = 0x00;
@@ -44,6 +45,9 @@ namespace Chip8Emu.Components
 
         public void Update()
         {
+            if (_paused)
+                return;
+
             if (_stopwatch500Hz.Elapsed >= _elapsedTimeTarget500Hz)
             {
                 if (_waitingForInput && CurrentKeyValue != 0x00)
@@ -76,6 +80,11 @@ namespace Chip8Emu.Components
                 _delayTimer--;
                 _stopwatch60Hz.Restart();
             }
+        }
+
+        public void TogglePause()
+        {
+            _paused = !_paused;
         }
 
         #region Helpers
