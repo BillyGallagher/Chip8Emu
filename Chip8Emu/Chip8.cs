@@ -1,13 +1,11 @@
 ﻿using Chip8Emu.Components;
 using Chip8Emu.Controls;
 using Chip8Emu.Displays;
-using Chip8Emu.Models;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 
@@ -34,6 +32,10 @@ namespace Chip8Emu
         public Chip8()
         {
             _graphics = new GraphicsDeviceManager(this);
+
+            // Remove 60Hz refresh cap
+            IsFixedTimeStep = false;
+            _graphics.SynchronizeWithVerticalRetrace = false;
 
             Window.AllowUserResizing = false; // TODO: Renable once click detection is fixed
             Window.ClientSizeChanged += OnResize;
